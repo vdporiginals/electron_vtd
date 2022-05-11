@@ -1,0 +1,104 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js install
+
+PATH: 
+  C:\Program Files\Python37\Scripts\;C:\Program Files\Python37\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\TortoiseSVN\bin;C:\Program Files\wkhtmltopdf\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files (x86)\Yarn\bin\;C:\Program Files (x86)\Yarn\bin;C:\Program Files\Python37\Scripts\;C:\Program Files\Python37\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\TortoiseSVN\bin;C:\Program Files\wkhtmltopdf\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files (x86)\Yarn\bin\;C:\Program Files (x86)\Yarn\bin;;C:\Program Files\Python37\Scripts;C:\Users\phuongvd8\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\phuongvd8\AppData\Local\Yarn\bin;C:\Program Files (x86)\Yarn\bin;
+
+Yarn version: 
+  1.22.18
+
+Node version: 
+  14.17.3
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EBUSY: resource busy or locked, unlink 'D:\electron-print-server\node_modules\electron\dist\icudtl.dat'
+
+npm manifest: 
+  {
+    "name": "electron-print-server",
+    "description": "Print server for printing URLs on local printers",
+    "author": "jbot <monstion@gmail.com>",
+    "homepage": "https://github.com/vast-ru/electron-print-server",
+    "version": "0.6.0",
+    "license": "MIT",
+    "main": "./dist/main/main.js",
+    "scripts": {
+      "dev": "electron-webpack dev",
+      "compile": "electron-webpack",
+      "dist": "yarn compile && electron-builder",
+      "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
+      "start": "electron-forge start",
+      "package": "electron-forge package",
+      "make": "electron-forge make"
+    },
+    "engines": {
+      "node": ">= 10.0.0"
+    },
+    "dependencies": {
+      "electron-squirrel-startup": "^1.0.0",
+      "source-map-support": "0.5.12"
+    },
+    "devDependencies": {
+      "@electron-forge/cli": "^6.0.0-beta.63",
+      "@electron-forge/maker-deb": "^6.0.0-beta.63",
+      "@electron-forge/maker-rpm": "^6.0.0-beta.63",
+      "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
+      "@electron-forge/maker-zip": "^6.0.0-beta.63",
+      "@electron/remote": "^2.0.1",
+      "@types/express": "4.17.0",
+      "axios": "~0.21.2",
+      "babel-preset-flow": "^6.23.0",
+      "body-parser": "1.19.0",
+      "content-type": "~1.0.4",
+      "debug": "4.1.1",
+      "electron": "15.3.5",
+      "electron-settings": "^4.0.0",
+      "electron-webpack": "2.7.2",
+      "electron-webpack-vue": "2.3.0",
+      "express": "4.17.1",
+      "flow-bin": "^0.86.0",
+      "lodash": "4.17.21",
+      "sass-loader": "^7.1.0",
+      "tmp": "0.1.0",
+      "vue": "2.6.10",
+      "vue-template-compiler": "2.6.10",
+      "webpack": "4.35.2",
+      "webpack-build-notifier": "1.0.3"
+    },
+    "config": {
+      "forge": {
+        "packagerConfig": {},
+        "makers": [
+          {
+            "name": "@electron-forge/maker-squirrel",
+            "config": {
+              "name": "electron_print_server"
+            }
+          },
+          {
+            "name": "@electron-forge/maker-zip",
+            "platforms": [
+              "darwin"
+            ]
+          },
+          {
+            "name": "@electron-forge/maker-deb",
+            "config": {}
+          },
+          {
+            "name": "@electron-forge/maker-rpm",
+            "config": {}
+          }
+        ]
+      }
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

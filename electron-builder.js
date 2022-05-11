@@ -1,7 +1,7 @@
 module.exports = () => {
     const buildStr = process.env.BUILD_NUMBER ? '.${env.BUILD_NUMBER}' : '';
     return {
-        productName : "Electron print server",
+        productName : "VTD-ERP Print server",
         nsis        : {
             oneClick    : false,
             artifactName: '${productName}-${version}' + buildStr + '-${os}-${arch}-Installer.${ext}',

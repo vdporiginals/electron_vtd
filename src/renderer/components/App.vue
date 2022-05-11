@@ -1,12 +1,12 @@
 <template>
     <div>
         <div>
-            <h3>Настройки сервера</h3>
+            <h3>Cài đặt máy chủ</h3>
             <select v-model="serverIp" :disabled="serverState === 'running'">
                 <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
             </select>
-            <input type="text" v-model="serverPort" placeholder="3030"/>
-            <label title="Использовать защищенное соединение">
+            <input type="text" v-model="serverPort" :disabled="serverPort === '3179'" placeholder="3179"/>
+            <label title="Sử dụng kết nối an toàn">
                 <input type="checkbox"
                     v-model="serverHttps"
                     :disabled="serverState === 'running'"
@@ -22,41 +22,41 @@
                 :disabled="serverState !== 'running'"
             >Off</button>
             <div>
-                Статус: {{ serverStateText }}
-                <button v-if="serverState === 'running'" @click="copyAddress()">Скопировать адрес</button>
+                Tình trạng: {{ serverStateText }}
+                <button v-if="serverState === 'running'" @click="copyAddress()">Sao chép địa chỉ</button>
             </div>
             <div>
                 <label>
                     <input type="checkbox" v-model="serverAutostart"/>
-                    Автозапуск сервера при старте приложения
+                    Máy chủ tự động khởi động khi khởi động ứng dụng
                 </label>
             </div>
         </div>
 
         <div>
-            <h3>Проверка печати</h3>
+            <h3>Kiểm tra bản in</h3>
             <input type="text" v-model="urlToPrint">
             <select v-model="printer">
                 <option v-for="p in availablePrinters" :value="p.name">{{ p.name }}</option>
             </select>
-            <button @click="print()" :disabled="printer === null">Напечатать</button>
+            <button @click="print()" :disabled="printer === null">Gõ phím</button>
             {{ printResult }}
         </div>
 
         <div v-if="serverHttps">
             <h3>HTTPS</h3>
             <p>
-                Сертификат (файл .crt)<br/>
+                Giấy chứng nhận (tập tin .crt)<br/>
                 <textarea rows="4" cols="64"
                     v-model="httpsCert"
-                    placeholder="Вставьте содержимое файла .crt"
+                    placeholder="Dán nội dung của tệp .crt"
                 ></textarea>
             </p>
             <p>
-                Ключ сертификата (файл .key)<br/>
+                Key Giấy chứng nhận (tập tin .key)<br/>
                 <textarea rows="4" cols="64"
                     v-model="httpsCertKey"
-                    placeholder="Вставьте содержимое файла .key"
+                    placeholder="Dán nội dung của tệp .key"
                 ></textarea>
             </p>
         </div>
@@ -77,16 +77,16 @@
             return {
                 availableIps   : [],
                 serverIp       : getSetting('server.ip', null),
-                serverPort     : getSetting('server.port', 3030),
+                serverPort     : getSetting('server.port', 3179),
                 serverHttps    : getSetting('server.https.enabled', false),
                 httpsCert      : getSetting('server.https.cert', ''),
                 httpsCertKey   : getSetting('server.https.certKey', ''),
                 serverState    : '',
-                serverAutostart: getSetting('server.autostart', false),
+                serverAutostart: getSetting('server.autostart', true),
 
                 availablePrinters: [],
                 printer          : null,
-                urlToPrint       : 'https://vast.ru',
+                urlToPrint       : '',
                 printResult      : '',
             };
         },
@@ -103,11 +103,11 @@
             serverStateText() {
                 switch (this.serverState) {
                     case 'running':
-                        return `Запущен на ${this.serverAddress}`;
+                        return `running ${this.serverAddress}`;
                     case 'stopped':
-                        return 'Остановлен';
+                        return 'stopped';
                     default:
-                        return 'Неизвестен';
+                        return 'stopped';
                 }
             },
             serverAddress() {
