@@ -15,7 +15,7 @@ import * as path from "path";
 import tmp from "tmp";
 import { format as formatUrl } from "url";
 import packageJson from "../../package.json";
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument } from "pdf-lib";
 
 remote.initialize();
 
@@ -138,8 +138,8 @@ app.on("ready", () => {
     if (address && port) {
       startServer(address, port, {
         useHttps: settings.getSync("server.https.enabled") || false,
-        httpsCert: settings.getSync("server.https.cert") || "",
-        httpsCertKey: settings.getSync("server.https.certKey") || "",
+        httpsCert: cert || "",
+        httpsCertKey: key || "",
       });
     }
   }
@@ -158,8 +158,15 @@ const sockets = new Set();
  * @type Electron.WebContents
  */
 let webContents;
+const key = fs.readFileSync(
+  extraResourcePath(process.platform, process.arch, "key.pem")
+);
 
-expressApp.use(function(req, res, next) {
+const cert = fs.readFileSync(
+  extraResourcePath(process.platform, process.arch, "cert.pem")
+);
+
+expressApp.use(function (req, res, next) {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Headers", ["Content-Type"].join(","));
   next();
@@ -178,21 +185,21 @@ expressApp.post("/print", (req, res) => {
   d("Printing %d jobs", jobs.length);
   console.log("Printing %d session", jobs, session);
   console.log("Printing %d jobs", jobs.length);
-  console.log('job.url', jobs[0].url)
+  console.log("job.url", jobs[0].url);
   Promise.all(
     jobs.map((job) => {
       return printUrl(job.url, job.printer, job.settings, session).then(
         (r) => {
-            return true
+          return true;
         },
         (e) => {
-            console.log(e);
-            return false
+          console.log(e);
+          return false;
         }
       );
     })
   ).then((results) => {
-    console.log(results)
+    console.log(results);
     res.json(results);
   });
 });
@@ -204,10 +211,10 @@ ipcMain.on("get-printers", (e) => {
 
 ipcMain.on("print", ({ sender }, { url, printer, settings }) => {
   webContents = sender;
-  console.log('onprint2', webContents);
+  console.log("onprint2", webContents);
   printUrl(url, printer, settings).then(
     () => {
-        console.log('onprint', url,printer);
+      console.log("onprint", url, printer);
       webContents.send("print-result", { success: true });
     },
     (error) => {
@@ -295,11 +302,11 @@ function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
 async function printUrl(url, printer, printSettings, session) {
   d("Loading url %s", url);
   return axios
-    .get(url,{
+    .get(url, {
       headers: {
         Cookie: `session_id=${session};`,
       },
-      responseType: 'arraybuffer'
+      responseType: "arraybuffer",
     })
     .then(
       async (r) => {
@@ -307,8 +314,8 @@ async function printUrl(url, printer, printSettings, session) {
         if (type === "application/pdf") {
           d("Content type is %s, printing directly", type);
           var bytes = new Uint8Array(r.data);
-          const pdfDoc = await PDFDocument.load(bytes)
-          const pdfBytes = await pdfDoc.save()
+          const pdfDoc = await PDFDocument.load(bytes);
+          const pdfBytes = await pdfDoc.save();
           return Promise.resolve(pdfBytes);
         }
 
