@@ -76,7 +76,7 @@
         data() {
             return {
                 availableIps   : [],
-                serverIp       : getSetting('server.ip', null),
+                serverIp       : getSetting('server.ip', 'localhost'),
                 serverPort     : getSetting('server.port', 3179),
                 serverHttps    : getSetting('server.https.enabled', false),
                 httpsCert      : getSetting('server.https.cert', ''),
