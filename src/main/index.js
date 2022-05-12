@@ -133,6 +133,10 @@ app.on("ready", () => {
   tray = createTray();
 
   if (settings.getSync("server.autostart")) {
+    app.setLoginItemSettings({
+      openAtLogin: settings.getSync("server.autostart"),
+      path: app.getPath("exe"),
+    });
     const address = settings.getSync("server.ip");
     const port = settings.getSync("server.port");
     if (address && port) {
