@@ -136,8 +136,8 @@ app.on("ready", () => {
     openAtLogin: true,
     path: app.getPath("exe"),
   });
-  const address = settings.getSync("server.ip");
-  const port = settings.getSync("server.port");
+  const address = settings.getSync("server.ip") || 'localhost';
+  const port = settings.getSync("server.port") || '3179';
   if (address && port) {
     startServer(address, port, {
       useHttps: false,
