@@ -136,7 +136,7 @@ app.on("ready", () => {
     openAtLogin: true,
     path: app.getPath("exe"),
   });
-  console.log(app.getPath("exe"))
+  console.log('console', app.getPath("exe"))
   if (settings.getSync("server.autostart")) {
     const address = settings.getSync("server.ip");
     const port = settings.getSync("server.port");
