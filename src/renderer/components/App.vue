@@ -25,12 +25,12 @@
                 Tình trạng: {{ serverStateText }}
                 <button v-if="serverState === 'running'" @click="copyAddress()">Sao chép địa chỉ</button>
             </div>
-            <div>
+            <!-- <div>
                 <label>
                     <input type="checkbox" v-model="serverAutostart"/>
                     Máy chủ tự động khởi động khi khởi động ứng dụng
                 </label>
-            </div>
+            </div> -->
         </div>
 
         <div>
@@ -43,7 +43,7 @@
             {{ printResult }}
         </div>
 
-        <div v-if="serverHttps">
+        <!-- <div v-if="serverHttps">
             <h3>HTTPS</h3>
             <p>
                 Giấy chứng nhận (tập tin .crt)<br/>
@@ -59,7 +59,7 @@
                     placeholder="Dán nội dung của tệp .key"
                 ></textarea>
             </p>
-        </div>
+        </div> -->
     </div>
 </template>
 

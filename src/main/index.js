@@ -136,17 +136,14 @@ app.on("ready", () => {
     openAtLogin: true,
     path: app.getPath("exe"),
   });
-  console.log('console', app.getPath("exe"))
-  if (settings.getSync("server.autostart")) {
-    const address = settings.getSync("server.ip");
-    const port = settings.getSync("server.port");
-    if (address && port) {
-      startServer(address, port, {
-        useHttps: settings.getSync("server.https.enabled") || false,
-        httpsCert: cert || "",
-        httpsCertKey: key || "",
-      });
-    }
+  const address = settings.getSync("server.ip");
+  const port = settings.getSync("server.port");
+  if (address && port) {
+    startServer(address, port, {
+      useHttps: false,
+      httpsCert: cert || "",
+      httpsCertKey: key || "",
+    });
   }
 });
 
