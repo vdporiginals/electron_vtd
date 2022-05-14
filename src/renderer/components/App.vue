@@ -5,7 +5,7 @@
             <select v-model="serverIp" :disabled="serverState === 'running'">
                 <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
             </select>
-            <input type="text" v-model="serverPort" :disabled="serverPort === '3179'" placeholder="3179"/>
+            <input type="text" v-model="serverPort" :disabled="serverPort == '3179'" placeholder="3179"/>
             <label title="Sử dụng kết nối an toàn">
                 <input type="checkbox"
                     v-model="serverHttps"
@@ -76,7 +76,7 @@
         data() {
             return {
                 availableIps   : [],
-                serverIp       : getSetting('server.ip', null),
+                serverIp       : getSetting('server.ip', 'localhost'),
                 serverPort     : getSetting('server.port', 3179),
                 serverHttps    : getSetting('server.https.enabled', false),
                 httpsCert      : getSetting('server.https.cert', ''),
