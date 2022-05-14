@@ -6,13 +6,6 @@
                 <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
             </select>
             <input type="text" v-model="serverPort" :disabled="serverPort == '3179'" placeholder="3179"/>
-            <label title="Sử dụng kết nối an toàn">
-                <input type="checkbox"
-                    v-model="serverHttps"
-                    :disabled="serverState === 'running'"
-                />
-                HTTPS
-            </label>
             <button
                 @click="startServer()"
                 :disabled="serverState === 'running' || !serverIp || (serverHttps && (!httpsCert || !httpsCertKey))"
@@ -25,12 +18,6 @@
                 Tình trạng: {{ serverStateText }}
                 <button v-if="serverState === 'running'" @click="copyAddress()">Sao chép địa chỉ</button>
             </div>
-            <!-- <div>
-                <label>
-                    <input type="checkbox" v-model="serverAutostart"/>
-                    Máy chủ tự động khởi động khi khởi động ứng dụng
-                </label>
-            </div> -->
         </div>
 
         <div>
