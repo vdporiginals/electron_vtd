@@ -9,6 +9,7 @@ import { app, BrowserWindow, ipcMain, Menu, Tray } from "electron";
 import settings from "electron-settings";
 import express from "express";
 import { promises as fsPromises } from "fs";
+import * as fs from "fs";
 import https from "https";
 import os from "os";
 import * as path from "path";
@@ -131,12 +132,12 @@ app.on("ready", () => {
   }
 
   tray = createTray();
-
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    path: app.getPath("exe"),
+  });
+  console.log(app.getPath("exe"))
   if (settings.getSync("server.autostart")) {
-    app.setLoginItemSettings({
-      openAtLogin: settings.getSync("server.autostart"),
-      path: app.getPath("exe"),
-    });
     const address = settings.getSync("server.ip");
     const port = settings.getSync("server.port");
     if (address && port) {
