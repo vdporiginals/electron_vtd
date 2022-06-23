@@ -160,38 +160,45 @@ const sockets = new Set();
  * @type Electron.WebContents
  */
 let webContents;
-const key = fs.readFileSync(
-  extraResourcePath(process.platform, process.arch, "key.pem")
-);
+// const key = fs.readFileSync(
+//   extraResourcePath(process.platform, process.arch, "key.pem")
+// );
 
-const cert = fs.readFileSync(
-  extraResourcePath(process.platform, process.arch, "cert.pem")
-);
+// const cert = fs.readFileSync(
+//   extraResourcePath(process.platform, process.arch, "cert.pem")
+// );
 
 expressApp.use(function (req, res, next) {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Headers", ["Content-Type"].join(","));
   next();
 });
-expressApp.use(bodyParser.urlencoded());
-expressApp.use(bodyParser.json());
+expressApp.use(express.json()); // Used to parse JSON bodies
+expressApp.use(express.urlencoded()); //Parse URL-encoded bodies
+let multer = require('multer');
+let upload = multer();
 
 expressApp.get("/printers", (req, res) => {
   res.json(webContents ? webContents.getPrinters() : null);
 });
 
-expressApp.post("/print", (req, res) => {
-  const jobs = req.body.jobs;
+expressApp.post("/print", upload.fields([]), (req, res) => {
+  const jobs = JSON.parse(req.body.jobs);
   const session = req.body.session_id;
-  d("Printing %d session", jobs, session);
-  d("Printing %d jobs", jobs.length);
-  console.log("Printing %d session", jobs, session);
-  console.log("Printing %d jobs", jobs.length);
-  console.log("job.url", jobs[0].url);
+  // d("Printing %d session",  req.body);
+  // d("Printing %d jobs", jobs.length);  
+  // console.log('body', req.body.session_id );
+  // console.log('filés', req.files );
+  // console.log("Printing session", req.body);
+  // console.log("Printing %d jobs", jobs.length);
+  // console.log("job.url", jobs[0].url);
   Promise.all(
     jobs.map((job) => {
-      return printUrl(job.url, job.printer, job.settings, session).then(
+      return printUrl(job.url, job.printer, job.settings, {
+        data: session
+      }).then(
         (r) => {
+          console.log(r)
           return true;
         },
         (e) => {
@@ -204,6 +211,7 @@ expressApp.post("/print", (req, res) => {
     console.log(results);
     res.json(results);
   });
+  return res.sendStatus(200);
 });
 
 ipcMain.on("get-printers", (e) => {
@@ -303,50 +311,38 @@ function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
 
 async function printUrl(url, printer, printSettings, session) {
   d("Loading url %s", url);
-  return axios
-    .get(url, {
-      headers: {
-        Cookie: `session_id=${session};`,
-      },
-      responseType: "arraybuffer",
-    })
-    .then(
+  return Promise.resolve(session.data).then(
       async (r) => {
-        const { type } = contentType.parse(r.headers["content-type"]);
-        if (type === "application/pdf") {
-          d("Content type is %s, printing directly", type);
-          var bytes = new Uint8Array(r.data);
-          const pdfDoc = await PDFDocument.load(bytes);
-          const pdfBytes = await pdfDoc.save();
-          return Promise.resolve(pdfBytes);
+        // const { type } = contentType.parse(r.headers['content-type']);
+
+        if (r) {
+            // d('Content type is %s, printing directly', type);
+            return Promise.resolve(r);
         }
 
-        d("Content type is %s, converting to PDF", type);
+        // d('Content type is %s, converting to PDF', type);
+
         const w = new BrowserWindow({
-          show: false,
+            show: false,
         });
 
-        return w
-          .loadURL(url, {
-            userAgent: "ElectronPrintServer / " + packageJson.version,
-          })
-          .then(() => {
+        return w.loadURL(url, {
+            userAgent: 'ElectronPrintServer / ' + packageJson.version,
+        }).then(() => {
             return w.webContents.printToPDF({});
-          })
-          .catch((e) => {
-            d("Convert to PDF error: %s", e.message);
+        }).catch(e => {
+            d('Convert to PDF error: %s', e.message);
             throw e;
-          })
-          .finally(() => {
+        }).finally(() => {
             w.close();
-          });
+        });
       },
       (e) => {
-        d("Error loading URL:", e.message);
+        // d("Error loading URL:", e.message);
 
-        if (e.response) {
-          d("Raw response:", e.response.data.toString());
-        }
+        // if (e.response) {
+        //   d("Raw response:", e.response.data.toString());
+        // }
 
         throw e;
       }
@@ -356,6 +352,7 @@ async function printUrl(url, printer, printSettings, session) {
         prefix: "print_",
         postfix: ".pdf",
       }).name;
+      console.log(data)
       return fsPromises.writeFile(fileName, data).then(
         () => {
           return fileName;
@@ -381,6 +378,7 @@ function printFile(fileName, printer, printSettings) {
     const fileNameEscaped = fileName.replace('"', '\\"');
     // Not supporting other platforms
     // noinspection SwitchStatementWithNoDefaultBranchJS
+    // console.log('onPrint file', fileNameEscaped, printerEscaped, printSettings, process.platform)
     switch (process.platform) {
       case "linux":
         command = [
