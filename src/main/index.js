@@ -1,22 +1,18 @@
 // @flow
 import * as remote from "@electron/remote/main";
-import bodyParser from "body-parser";
-import axios from "axios";
-import contentType from "content-type";
 import childProcess from "child_process";
 import debug from "debug";
 import { app, BrowserWindow, ipcMain, Menu, Tray } from "electron";
 import settings from "electron-settings";
 import express from "express";
 import { promises as fsPromises } from "fs";
-import * as fs from "fs";
 import https from "https";
 import os from "os";
 import * as path from "path";
 import tmp from "tmp";
 import { format as formatUrl } from "url";
 import packageJson from "../../package.json";
-import { PDFDocument } from "pdf-lib";
+import { Blob } from "buffer";
 
 remote.initialize();
 
@@ -136,13 +132,13 @@ app.on("ready", () => {
     openAtLogin: true,
     path: app.getPath("exe"),
   });
-  const address = settings.getSync("server.ip") || 'localhost';
-  const port = settings.getSync("server.port") || '3179';
+  const address = settings.getSync("server.ip") || "localhost";
+  const port = settings.getSync("server.port") || "3179";
   if (address && port) {
     startServer(address, port, {
       useHttps: false,
-      httpsCert: cert || "",
-      httpsCertKey: key || "",
+      httpsCert: "",
+      httpsCertKey: "",
     });
   }
 });
@@ -160,13 +156,6 @@ const sockets = new Set();
  * @type Electron.WebContents
  */
 let webContents;
-// const key = fs.readFileSync(
-//   extraResourcePath(process.platform, process.arch, "key.pem")
-// );
-
-// const cert = fs.readFileSync(
-//   extraResourcePath(process.platform, process.arch, "cert.pem")
-// );
 
 expressApp.use(function (req, res, next) {
   res.set("Access-Control-Allow-Origin", "*");
@@ -175,18 +164,18 @@ expressApp.use(function (req, res, next) {
 });
 expressApp.use(express.json()); // Used to parse JSON bodies
 expressApp.use(express.urlencoded()); //Parse URL-encoded bodies
-let multer = require('multer');
+let multer = require("multer");
 let upload = multer();
 
 expressApp.get("/printers", (req, res) => {
   res.json(webContents ? webContents.getPrinters() : null);
 });
 
-expressApp.post("/print", upload.fields([]), (req, res) => {
+expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
   const jobs = JSON.parse(req.body.jobs);
   const session = req.body.session_id;
   // d("Printing %d session",  req.body);
-  // d("Printing %d jobs", jobs.length);  
+  // d("Printing %d jobs", jobs.length);
   // console.log('body', req.body.session_id );
   // console.log('filés', req.files );
   // console.log("Printing session", req.body);
@@ -194,11 +183,10 @@ expressApp.post("/print", upload.fields([]), (req, res) => {
   // console.log("job.url", jobs[0].url);
   Promise.all(
     jobs.map((job) => {
-      return printUrl(job.url, job.printer, job.settings, {
-        data: session
-      }).then(
+      return printUrl(job.url, job.printer, job.settings, session).then(
         (r) => {
-          console.log(r)
+          console.log(r);
+          console.log(new Date().getTime());
           return true;
         },
         (e) => {
@@ -209,11 +197,11 @@ expressApp.post("/print", upload.fields([]), (req, res) => {
     })
   ).then((results) => {
     console.log(results);
+    console.log(new Date().getTime());
     res.json(results);
   });
   return res.sendStatus(200);
 });
-
 ipcMain.on("get-printers", (e) => {
   webContents = e.sender;
   e.returnValue = webContents.getPrinters();
@@ -221,10 +209,10 @@ ipcMain.on("get-printers", (e) => {
 
 ipcMain.on("print", ({ sender }, { url, printer, settings }) => {
   webContents = sender;
-  console.log("onprint2", webContents);
+  // console.log(new Date().getTime());
   printUrl(url, printer, settings).then(
     () => {
-      console.log("onprint", url, printer);
+      // console.log(new Date().getTime());
       webContents.send("print-result", { success: true });
     },
     (error) => {
@@ -310,32 +298,43 @@ function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
 }
 
 async function printUrl(url, printer, printSettings, session) {
-  d("Loading url %s", url);
-  return Promise.resolve(session.data).then(
+  // d("Loading url %s", session);
+  // console.log(session);
+  // var arrByte = Uint8Array.from(await session.arrayBuffer())
+  // console.log(session)
+  // var blob = new Blob([session], { type: "application/pdf" });
+  console.log(new Date().getTime())
+  return Promise.resolve(session)
+    .then(
       async (r) => {
         // const { type } = contentType.parse(r.headers['content-type']);
 
         if (r) {
-            // d('Content type is %s, printing directly', type);
-            return Promise.resolve(r);
+          
+          // d('Content type is %s, printing directly', type);
+          return Promise.resolve(Buffer.from(r, 'base64'));
         }
 
         // d('Content type is %s, converting to PDF', type);
 
         const w = new BrowserWindow({
-            show: false,
+          show: false,
         });
 
-        return w.loadURL(url, {
-            userAgent: 'ElectronPrintServer / ' + packageJson.version,
-        }).then(() => {
+        return w
+          .loadURL(url, {
+            userAgent: "ElectronPrintServer / " + packageJson.version,
+          })
+          .then(() => {
             return w.webContents.printToPDF({});
-        }).catch(e => {
-            d('Convert to PDF error: %s', e.message);
+          })
+          .catch((e) => {
+            d("Convert to PDF error: %s", e.message);
             throw e;
-        }).finally(() => {
+          })
+          .finally(() => {
             w.close();
-        });
+          });
       },
       (e) => {
         // d("Error loading URL:", e.message);
@@ -347,14 +346,21 @@ async function printUrl(url, printer, printSettings, session) {
         throw e;
       }
     )
-    .then((data) => {
+    .then(async (data) => {
       const fileName = tmp.fileSync({
         prefix: "print_",
         postfix: ".pdf",
       }).name;
-      console.log(data)
+      // var binary_string = atob(data);
+      // var len = binary_string.length;
+      // var bytes = new Uint8Array(len);
+      // for (var i = 0; i < len; i++) {
+      //     bytes[i] = binary_string.charCodeAt(i);
+      // }
+    // return bytes.buffer;
       return fsPromises.writeFile(fileName, data).then(
         () => {
+          // console.log(new Date().getTime());
           return fileName;
         },
         (e) => {
@@ -376,10 +382,13 @@ function printFile(fileName, printer, printSettings) {
     let command;
     const printerEscaped = printer.replace('"', '\\"');
     const fileNameEscaped = fileName.replace('"', '\\"');
+
+    // console.log(printerEscaped, printer, fileNameEscaped, fileName);
     // Not supporting other platforms
     // noinspection SwitchStatementWithNoDefaultBranchJS
     // console.log('onPrint file', fileNameEscaped, printerEscaped, printSettings, process.platform)
     switch (process.platform) {
+      case "darwin":
       case "linux":
         command = [
           "lp",
