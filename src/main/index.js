@@ -181,7 +181,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
   // console.log("Printing session", req.body);
   // console.log("Printing %d jobs", jobs.length);
   // console.log("job.url", jobs[0].url);
-  Promise.all(
+  return Promise.all(
     jobs.map((job) => {
       return printUrl(job.url, job.printer, job.settings, session).then(
         (r) => {
