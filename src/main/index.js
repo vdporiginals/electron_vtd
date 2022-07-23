@@ -156,7 +156,6 @@ const sockets = new Set();
  * @type Electron.WebContents
  */
 let webContents;
-
 expressApp.use(function (req, res, next) {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Headers", ["Content-Type"].join(","));
@@ -164,8 +163,11 @@ expressApp.use(function (req, res, next) {
 });
 expressApp.use(express.json()); // Used to parse JSON bodies
 expressApp.use(express.urlencoded()); //Parse URL-encoded bodies
+expressApp.use(express.urlencoded({ extended: false, limit: '10gb' }));
 let multer = require("multer");
-let upload = multer();
+let upload = multer({
+  limits: { fileSize: 104857600  }
+});
 
 expressApp.get("/printers", (req, res) => {
   res.json(webContents ? webContents.getPrinters() : null);
