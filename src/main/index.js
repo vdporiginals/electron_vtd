@@ -162,7 +162,6 @@ expressApp.use(function (req, res, next) {
   next();
 });
 expressApp.use(express.json()); // Used to parse JSON bodies
-expressApp.use(express.urlencoded()); //Parse URL-encoded bodies
 expressApp.use(express.urlencoded({ extended: false, limit: '10gb' }));
 let multer = require("multer");
 let upload = multer({
