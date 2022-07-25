@@ -12,7 +12,6 @@ import * as path from "path";
 import tmp from "tmp";
 import { format as formatUrl } from "url";
 import packageJson from "../../package.json";
-import { Blob } from "buffer";
 
 remote.initialize();
 
@@ -165,7 +164,8 @@ expressApp.use(express.json()); // Used to parse JSON bodies
 expressApp.use(express.urlencoded({ extended: false, limit: '10gb' }));
 let multer = require("multer");
 let upload = multer({
-  limits: { fileSize: 104857600  }
+  limits: { fileSize: 10 * 1024 * 1024,
+    fieldSize: 10 * 1024 * 1024  }
 });
 
 expressApp.get("/printers", (req, res) => {
@@ -186,7 +186,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
     jobs.map((job) => {
       return printUrl(job.url, job.printer, job.settings, session).then(
         (r) => {
-          console.log(r);
+          // console.log(r);
           console.log(new Date().getTime());
           return true;
         },
@@ -197,7 +197,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
       );
     })
   ).then((results) => {
-    console.log(results);
+    // console.log(results);
     console.log(new Date().getTime());
     res.json(results);
   });
