@@ -12,7 +12,7 @@ import * as path from "path";
 import tmp from "tmp";
 import { format as formatUrl } from "url";
 import packageJson from "../../package.json";
-
+import { print } from "pdf-to-printer";
 remote.initialize();
 
 const d = debug("electron-print-server");
@@ -388,6 +388,7 @@ function printFile(fileName, printer, printSettings) {
     // Not supporting other platforms
     // noinspection SwitchStatementWithNoDefaultBranchJS
     // console.log('onPrint file', fileNameEscaped, printerEscaped, printSettings, process.platform)
+    return print(fileNameEscaped).then(console.log);
     switch (process.platform) {
       case "darwin":
       case "linux":
