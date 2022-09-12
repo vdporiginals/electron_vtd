@@ -6,13 +6,13 @@ import { app, BrowserWindow, ipcMain, Menu, Tray } from "electron";
 import settings from "electron-settings";
 import express from "express";
 import { promises as fsPromises } from "fs";
+import * as fsNormal from "fs";
 import https from "https";
 import os from "os";
 import * as path from "path";
 import tmp from "tmp";
 import { format as formatUrl } from "url";
 import packageJson from "../../package.json";
-
 remote.initialize();
 
 const d = debug("electron-print-server");
@@ -108,7 +108,7 @@ function toggleMainWindow() {
 }
 
 // Override default behavior: we don't want to quit when window is closed.
-app.on("window-all-closed", () => {});
+app.on("window-all-closed", () => { });
 
 app.on("activate", () => {
   // on macOS it is common to re-create a window even after all windows have
@@ -125,7 +125,6 @@ app.on("ready", () => {
   if (shouldShowWindow) {
     mainWindow = createMainWindow();
   }
-
   tray = createTray();
   app.setLoginItemSettings({
     openAtLogin: true,
@@ -140,6 +139,22 @@ app.on("ready", () => {
       httpsCertKey: "",
     });
   }
+  fsNormal.readdir(extraResourcePath(
+    process.platform,
+    process.arch,
+    'tmp'
+  ), (err, files) => {
+    if (err) return console.log(err);
+    for (const file of files) {
+      fsNormal.unlink(path.join(extraResourcePath(
+        process.platform,
+        process.arch,
+        'tmp'
+      ), file), err => {
+        if (err) throw err;
+      });
+    }
+  });
 });
 
 /**
@@ -164,8 +179,10 @@ expressApp.use(express.json()); // Used to parse JSON bodies
 expressApp.use(express.urlencoded({ extended: false, limit: '10gb' }));
 let multer = require("multer");
 let upload = multer({
-  limits: { fileSize: 10 * 1024 * 1024,
-    fieldSize: 10 * 1024 * 1024  }
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    fieldSize: 10 * 1024 * 1024
+  }
 });
 
 expressApp.get("/printers", (req, res) => {
@@ -187,7 +204,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
       return printUrl(job.url, job.printer, job.settings, session).then(
         (r) => {
           // console.log(r);
-          console.log(new Date().getTime());
+          // console.log(new Date().getTime());
           return true;
         },
         (e) => {
@@ -198,7 +215,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
     })
   ).then((results) => {
     // console.log(results);
-    console.log(new Date().getTime());
+    // console.log(new Date().getTime());
     res.json(results);
   });
   return res.sendStatus(200);
@@ -304,14 +321,14 @@ async function printUrl(url, printer, printSettings, session) {
   // var arrByte = Uint8Array.from(await session.arrayBuffer())
   // console.log(session)
   // var blob = new Blob([session], { type: "application/pdf" });
-  console.log(new Date().getTime())
+  // console.log(new Date().getTime())
   return Promise.resolve(session)
     .then(
       async (r) => {
         // const { type } = contentType.parse(r.headers['content-type']);
 
         if (r) {
-          
+
           // d('Content type is %s, printing directly', type);
           return Promise.resolve(Buffer.from(r, 'base64'));
         }
@@ -348,17 +365,32 @@ async function printUrl(url, printer, printSettings, session) {
       }
     )
     .then(async (data) => {
-      const fileName = tmp.fileSync({
+      const fileName = tmp.tmpNameSync({
+        dir: `${extraResourcePath(
+          process.platform,
+          process.arch,
+          'tmp'
+        )}`,
         prefix: "print_",
         postfix: ".pdf",
-      }).name;
+      });
+      // `"${extraResourcePath(
+      //   process.platform,
+      //   process.arch,
+      //   "PDFtoPrinter.exe"
+      // )}"`
+      // const file = fsNormal.writeFileSync(`${extraResourcePath(
+      //   process.platform,
+      //   process.arch,
+      //   `print_1212.pdf`
+      // )}`, );
       // var binary_string = atob(data);
       // var len = binary_string.length;
       // var bytes = new Uint8Array(len);
       // for (var i = 0; i < len; i++) {
       //     bytes[i] = binary_string.charCodeAt(i);
       // }
-    // return bytes.buffer;
+      // return bytes.buffer;
       return fsPromises.writeFile(fileName, data).then(
         () => {
           // console.log(new Date().getTime());
@@ -383,11 +415,22 @@ function printFile(fileName, printer, printSettings) {
     let command;
     const printerEscaped = printer.replace('"', '\\"');
     const fileNameEscaped = fileName.replace('"', '\\"');
-
     // console.log(printerEscaped, printer, fileNameEscaped, fileName);
     // Not supporting other platforms
     // noinspection SwitchStatementWithNoDefaultBranchJS
     // console.log('onPrint file', fileNameEscaped, printerEscaped, printSettings, process.platform)
+    // console.log([
+    //   `"${extraResourcePath(
+    //     process.platform,
+    //     process.arch,
+    //     "PDFtoPrinter.exe"
+    //   )}"`,
+    //   `"${fileNameEscaped}"`,
+    //   `"${printerEscaped}"`,
+    //   `copies=${printSettings.copies}`,
+    //   // `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
+    //   "/s",
+    // ].join(" "))
     switch (process.platform) {
       case "darwin":
       case "linux":
@@ -399,17 +442,33 @@ function printFile(fileName, printer, printSettings) {
         ].join(" ");
         break;
       case "win32":
-        command = [
-          `"${extraResourcePath(
-            process.platform,
-            process.arch,
-            "SumatraPDF.exe"
-          )}"`,
-          `-print-to "${printerEscaped}"`,
-          `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
-          "-silent",
-          `"${fileNameEscaped}"`,
-        ].join(" ");
+        const type = settings.getSync("server.type.print") || 'PDFtoPrinter';
+        if (type === 'PDFtoPrinter'){
+          command = [
+            `"${extraResourcePath(
+              process.platform,
+              process.arch,
+              "PDFtoPrinter.exe"
+            )}"`,
+            `"${fileNameEscaped}"`,
+            `"${printerEscaped}"`,
+            `copies=${printSettings.copies}`,
+            // `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
+            "/s",
+          ].join(" ");
+        } else {
+          command = [
+            `"${extraResourcePath(
+              process.platform,
+              process.arch,
+              "SumatraPDF.exe"
+            )}"`,
+            `-print-to "${printerEscaped}"`,
+            `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
+            "-silent",
+            `"${fileNameEscaped}"`,
+          ].join(" ");
+        }
         break;
     }
     d(`Executing: ${command}`);
@@ -432,11 +491,11 @@ function printSettingsToLpFormat(printSettings) {
   if (printSettings.duplex) {
     parts.push(
       "-o sides=" +
-        {
-          simplex: "one-sided",
-          short: "two-sided-short-edge",
-          long: "two-sided-long-edge",
-        }[printSettings.duplex]
+      {
+        simplex: "one-sided",
+        short: "two-sided-short-edge",
+        long: "two-sided-long-edge",
+      }[printSettings.duplex]
     );
   }
 
@@ -448,10 +507,10 @@ function printSettingsToLpFormat(printSettings) {
     parts.push(printSettings.orientation);
     parts.push(
       "-o orientation-requested=" +
-        {
-          portrait: 3,
-          landscape: 4,
-        }[printSettings.orientation]
+      {
+        portrait: 3,
+        landscape: 4,
+      }[printSettings.orientation]
     );
   }
 
