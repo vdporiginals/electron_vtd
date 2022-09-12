@@ -146,7 +146,7 @@ app.on("ready", () => {
   ), (err, files) => {
     if (err) return console.log(err);
     for (const file of files) {
-      fsNormal.unlink(path.join(extraResourcePath(
+      if (!file.includes('.tmp')) fsNormal.unlink(path.join(extraResourcePath(
         process.platform,
         process.arch,
         'tmp'
@@ -415,7 +415,6 @@ function printFile(fileName, printer, printSettings) {
     let command;
     const printerEscaped = printer.replace('"', '\\"');
     const fileNameEscaped = fileName.replace('"', '\\"');
-    console.log(fileNameEscaped)
     // console.log(printerEscaped, printer, fileNameEscaped, fileName);
     // Not supporting other platforms
     // noinspection SwitchStatementWithNoDefaultBranchJS

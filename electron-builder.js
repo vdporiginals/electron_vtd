@@ -8,7 +8,6 @@ module.exports = () => {
         },
         artifactName: '${productName}-${version}' + buildStr + '-${os}-${arch}.${ext}',
         win: {
-            "requestedExecutionLevel": "highestAvailable",
             target: [
                 {
                     target: "portable",
@@ -21,11 +20,6 @@ module.exports = () => {
             ],
             extraResources: "./external/win32/${arch}",
         },
-        "build": {
-            "win": {
-              "requestedExecutionLevel": "highestAvailable"
-            }
-          },
         linux: {
             target: [
                 "tar.gz",
