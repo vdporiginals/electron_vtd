@@ -415,6 +415,7 @@ function printFile(fileName, printer, printSettings) {
     let command;
     const printerEscaped = printer.replace('"', '\\"');
     const fileNameEscaped = fileName.replace('"', '\\"');
+
     // console.log(printerEscaped, printer, fileNameEscaped, fileName);
     // Not supporting other platforms
     // noinspection SwitchStatementWithNoDefaultBranchJS
