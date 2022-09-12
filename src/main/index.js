@@ -204,7 +204,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
       return printUrl(job.url, job.printer, job.settings, session).then(
         (r) => {
           // console.log(r);
-          console.log(new Date().getTime());
+          // console.log(new Date().getTime());
           return true;
         },
         (e) => {
@@ -215,7 +215,7 @@ expressApp.post("/print", upload.fields(['session_id', 'jobs']), (req, res) => {
     })
   ).then((results) => {
     // console.log(results);
-    console.log(new Date().getTime());
+    // console.log(new Date().getTime());
     res.json(results);
   });
   return res.sendStatus(200);
@@ -321,7 +321,7 @@ async function printUrl(url, printer, printSettings, session) {
   // var arrByte = Uint8Array.from(await session.arrayBuffer())
   // console.log(session)
   // var blob = new Blob([session], { type: "application/pdf" });
-  console.log(new Date().getTime())
+  // console.log(new Date().getTime())
   return Promise.resolve(session)
     .then(
       async (r) => {
@@ -442,18 +442,33 @@ function printFile(fileName, printer, printSettings) {
         ].join(" ");
         break;
       case "win32":
-        command = [
-          `"${extraResourcePath(
-            process.platform,
-            process.arch,
-            "PDFtoPrinter.exe"
-          )}"`,
-          `"${fileNameEscaped}"`,
-          `"${printerEscaped}"`,
-          `copies=${printSettings.copies}`,
-          // `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
-          "/s",
-        ].join(" ");
+        const type = settings.getSync("server.type.print") || 'PDFtoPrinter';
+        if (type === 'PDFtoPrinter'){
+          command = [
+            `"${extraResourcePath(
+              process.platform,
+              process.arch,
+              "PDFtoPrinter.exe"
+            )}"`,
+            `"${fileNameEscaped}"`,
+            `"${printerEscaped}"`,
+            `copies=${printSettings.copies}`,
+            // `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
+            "/s",
+          ].join(" ");
+        } else {
+          command = [
+            `"${extraResourcePath(
+              process.platform,
+              process.arch,
+              "SumatraPDF.exe"
+            )}"`,
+            `-print-to "${printerEscaped}"`,
+            `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
+            "-silent",
+            `"${fileNameEscaped}"`,
+          ].join(" ");
+        }
         break;
     }
     d(`Executing: ${command}`);
