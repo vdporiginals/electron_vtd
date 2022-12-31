@@ -443,7 +443,7 @@ function printFile(fileName, printer, printSettings) {
         break;
       case "win32":
         const type = settings.getSync("server.type.print") || 'PDFtoPrinter';
-        if (type === 'PDFtoPrinter'){
+        if (type === 'PDFtoPrinter') {
           command = [
             `"${extraResourcePath(
               process.platform,
@@ -534,6 +534,8 @@ function printSettingsToSumatraFormat(printSettings) {
 
   if (printSettings.copies && printSettings.copies > 1) {
     parts.push(printSettings.copies + "x");
+  } else {
+    parts.push("1x");
   }
 
   if (printSettings.orientation) {
