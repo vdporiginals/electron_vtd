@@ -372,7 +372,7 @@ async function printUrl(url, printer, printSettings, session) {
           'tmp'
         )}`,
         prefix: "print_",
-        postfix: ".pdf",
+        postfix: ".png",
       });
       // `"${extraResourcePath(
       //   process.platform,
@@ -403,6 +403,17 @@ async function printUrl(url, printer, printSettings, session) {
       );
     })
     .then((fileName) => {
+      let w = new BrowserWindow({ width: 800, height: 600, show: false });
+      // Could be redundant, try if you need this.
+      w.once('ready-to-show', () => win.hide())
+      // load PDF.
+      w.loadURL(fileName);
+      // if pdf is loaded start printing.
+      w.webContents.on('did-finish-load', () => {
+        win.webContents.print({ silent: true });
+        // close window after print order.
+        win = null;
+      });
       return printFile(fileName, printer, printSettings).catch((e) => {
         d("Print error: %s", e.message);
         throw e;
