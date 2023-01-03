@@ -69,7 +69,11 @@
       <select v-model="typePrint">
         <option
           v-bind:key="p.name"
-          v-for="p in [{ name: 'SumatraPDF' }, { name: 'PDFtoPrinter' }]"
+          v-for="p in [
+            { name: 'native' },
+            { name: 'SumatraPDF' },
+            { name: 'PDFtoPrinter' },
+          ]"
           :value="p.name"
         >
           {{ p.name }}
@@ -102,9 +106,9 @@
 </template>
 
 <script>
-import { clipboard, ipcRenderer } from "electron";
-import settings from "electron-settings";
-import flatten from "lodash/flatten";
+import { clipboard, ipcRenderer } from 'electron';
+import settings from 'electron-settings';
+import flatten from 'lodash/flatten';
 
 const getSetting = (path, def) => {
   return settings.hasSync(path) ? settings.getSync(path) : def;
@@ -114,19 +118,19 @@ export default {
   data() {
     return {
       availableIps: [],
-      serverIp: getSetting("server.ip", null),
-      serverPort: getSetting("server.port", 3179),
-      serverHttps: getSetting("server.https.enabled", false),
-      httpsCert: getSetting("server.https.cert", ""),
-      httpsCertKey: getSetting("server.https.certKey", ""),
-      serverState: "",
-      serverAutostart: getSetting("server.autostart", true),
+      serverIp: getSetting('server.ip', null),
+      serverPort: getSetting('server.port', 3179),
+      serverHttps: getSetting('server.https.enabled', false),
+      httpsCert: getSetting('server.https.cert', ''),
+      httpsCertKey: getSetting('server.https.certKey', ''),
+      serverState: '',
+      serverAutostart: getSetting('server.autostart', true),
 
       availablePrinters: [],
       printer: null,
-      urlToPrint: "",
-      printResult: "",
-      typePrint: getSetting("server.type.print", "PDFtoPrinter"),
+      urlToPrint: '',
+      printResult: '',
+      typePrint: getSetting('server.type.print', 'native'),
     };
   },
   created() {
@@ -141,12 +145,12 @@ export default {
   computed: {
     serverStateText() {
       switch (this.serverState) {
-        case "running":
+        case 'running':
           return `running ${this.serverAddress}`;
-        case "stopped":
-          return "stopped";
+        case 'stopped':
+          return 'stopped';
         default:
-          return "stopped";
+          return 'stopped';
       }
     },
     serverAddress() {
@@ -155,57 +159,57 @@ export default {
   },
   watch: {
     serverIp(ip) {
-      settings.setSync("server.ip", ip);
+      settings.setSync('server.ip', ip);
     },
     serverPort(port) {
-      settings.setSync("server.port", port);
+      settings.setSync('server.port', port);
     },
     serverHttps(useHttps) {
-      settings.setSync("server.https.enabled", useHttps);
+      settings.setSync('server.https.enabled', useHttps);
     },
     httpsCert(cert) {
-      settings.setSync("server.https.cert", cert);
+      settings.setSync('server.https.cert', cert);
     },
     httpsCertKey(key) {
-      settings.setSync("server.https.certKey", key);
+      settings.setSync('server.https.certKey', key);
     },
     serverAutostart(autostart) {
-      settings.setSync("server.autostart", autostart);
+      settings.setSync('server.autostart', autostart);
     },
     typePrint(type) {
-      settings.setSync("server.type.print", type);
+      settings.setSync('server.type.print', type);
     },
   },
   methods: {
     updatePrinters() {
-      this.availablePrinters = ipcRenderer.sendSync("get-printers");
+      this.availablePrinters = ipcRenderer.sendSync('get-printers');
     },
     initMainProcessListeners() {
-      ipcRenderer.on("server-state", (e, state) => {
+      ipcRenderer.on('server-state', (e, state) => {
         this.serverState = state;
       });
     },
     updateNetworkInterfaces() {
-      const interfaces = ipcRenderer.sendSync("get-network-interfaces");
+      const interfaces = ipcRenderer.sendSync('get-network-interfaces');
       this.availableIps = flatten(Object.values(interfaces))
-        .filter((addr) => addr.family === "IPv4" && !addr.internal)
+        .filter((addr) => addr.family === 'IPv4' && !addr.internal)
         .map((addr) => addr.address)
-        .concat("localhost");
+        .concat('localhost');
     },
     updateServerState() {
-      ipcRenderer.send("get-server-state");
+      ipcRenderer.send('get-server-state');
     },
     print() {
-      ipcRenderer.send("print", {
+      ipcRenderer.send('print', {
         printer: this.printer,
         url: this.urlToPrint,
       });
-      ipcRenderer.once("print-result", (e, { success, error }) => {
-        this.printResult = success ? "ok" : "fail: " + JSON.stringify(error);
+      ipcRenderer.once('print-result', (e, { success, error }) => {
+        this.printResult = success ? 'ok' : 'fail: ' + JSON.stringify(error);
       });
     },
     startServer() {
-      ipcRenderer.send("start-server", {
+      ipcRenderer.send('start-server', {
         port: this.serverPort,
         hostname: this.serverIp,
         httpsSettings: {
@@ -216,7 +220,7 @@ export default {
       });
     },
     stopServer() {
-      ipcRenderer.send("stop-server");
+      ipcRenderer.send('stop-server');
     },
     copyAddress() {
       clipboard.writeText(this.serverAddress);

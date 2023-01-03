@@ -403,17 +403,6 @@ async function printUrl(url, printer, printSettings, session) {
       );
     })
     .then((fileName) => {
-      let w = new BrowserWindow({ width: 800, height: 600, show: false });
-      // Could be redundant, try if you need this.
-      w.once('ready-to-show', () => win.hide())
-      // load PDF.
-      w.loadURL(fileName);
-      // if pdf is loaded start printing.
-      w.webContents.on('did-finish-load', () => {
-        win.webContents.print({ silent: true });
-        // close window after print order.
-        win = null;
-      });
       return printFile(fileName, printer, printSettings).catch((e) => {
         d("Print error: %s", e.message);
         throw e;
@@ -453,7 +442,7 @@ function printFile(fileName, printer, printSettings) {
         ].join(" ");
         break;
       case "win32":
-        const type = settings.getSync("server.type.print") || 'PDFtoPrinter';
+        const type = settings.getSync("server.type.print") || 'native';
         if (type === 'PDFtoPrinter') {
           command = [
             `"${extraResourcePath(
@@ -467,6 +456,30 @@ function printFile(fileName, printer, printSettings) {
             // `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
             "/s",
           ].join(" ");
+        } else if (type === 'native') {
+          let w = new BrowserWindow({ width: 800, height: 600, show: false });
+          // Could be redundant, try if you need this.
+          w.once('ready-to-show', () => w.hide())
+          // load PDF.
+          w.loadURL(fileName);
+          // if pdf is loaded start printing.
+          w.webContents.on('did-finish-load', () => {
+            w.webContents.print({
+              silent: true, deviceName: printer, copies: printSettings?.copies || 1, duplexMode: {
+                simplex: "simplex",
+                short: "shortEdge",
+                long: "longEdge",
+              }[printSettings.duplex],
+              landscape: printSettings?.orientation === 'portrait' ? false : true
+            });
+            // close window after print order.
+            // w = null;
+            resolve(true);
+            setTimeout(() => {
+              w.close();
+            }, 5000);
+          });
+          return;
         } else {
           command = [
             `"${extraResourcePath(
