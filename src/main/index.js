@@ -470,13 +470,22 @@ function printFile(fileName, printer, printSettings) {
                 short: "shortEdge",
                 long: "longEdge",
               }[printSettings.duplex],
+              pageSize: 'A4',
+              margins: {
+                marginType: 'none',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0
+              },
               landscape: printSettings?.orientation === 'portrait' ? false : true
             });
             // close window after print order.
-            // w = null;
+
             resolve(true);
             setTimeout(() => {
               w.close();
+              w = null;
             }, 5000);
           });
           return;
